@@ -269,18 +269,49 @@ async def register(
 
 @router.post("/login/", response_model=TokenResponse, tags=["Login and Registration"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
-    if await UserService.is_account_locked(session, form_data.username):
-        raise HTTPException(status_code=400, detail="Account locked due to too many failed login attempts.")
+    """
+    Authenticate a user and return an access token.
 
-    user = await UserService.login_user(session, form_data.username, form_data.password)
-    if user:
+    Parameters:
+    - username: User's email or nickname
+    - password: User's password
+
+    Returns:
+    - TokenResponse: Access token and token type
+
+    Raises:
+    - HTTPException(400): Account is locked due to too many failed attempts
+    - HTTPException(401): Invalid credentials
+    - HTTPException(500): Internal server error during authentication
+    """
+    try:
+        if await UserService.is_account_locked(session, form_data.username):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Account locked due to too many failed login attempts."
+            )
+
+        user = await UserService.login_user(session, form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Incorrect email or password"
+            )
+
         access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
         access_token = JWTService.create_access_token(
             data={"sub": user.email, "role": str(user.role.name)},
             expires_delta=access_token_expires
         )
         return {"access_token": access_token, "token_type": "bearer"}
-    raise HTTPException(status_code=401, detail="Incorrect email or password.")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during authentication. Please try again later."
+        )
 
 
 @router.get("/verify-email/{user_id}/{token}", status_code=status.HTTP_200_OK, name="verify_email", tags=["Login and Registration"])
