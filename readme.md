@@ -10,6 +10,12 @@
 3. [Authentication System Enhancement #3](https://github.com/ErcihanK/event_manager/issues/3)
    Security was a key concern here. I improved the authentication system by implementing proper token validation and password security measures.
 
+4. [API Key Authentication Implementation #4](https://github.com/ErcihanK/event_manager/issues/4)
+   I tackled the missing authentication mechanisms by implementing a robust API key system. This included adding validation middleware and secure key storage to ensure protected endpoints are properly secured.
+
+5. [Test Coverage Improvement #5](https://github.com/ErcihanK/event_manager/issues/5)
+   I significantly enhanced the project's test coverage to 83% by adding comprehensive unit tests and improving test documentation. This ensures better code reliability and makes future modifications safer.
+
 ## Docker Image
 ![image](https://github.com/user-attachments/assets/59580d38-ae55-4ff5-b1b7-213daa85dd62)
 
