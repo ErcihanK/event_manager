@@ -314,7 +314,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Async
         )
 
 
-# Remove duplicate verify_email route and keep only this one
+# Remove duplicate /verify-email route and keep only this consolidated version
 @router.get("/verify-email/{user_id}/{token}", status_code=status.HTTP_200_OK, name="verify_email", tags=["Login and Registration"])
 async def verify_email(user_id: UUID, token: str, db: AsyncSession = Depends(get_db), email_service: EmailService = Depends(get_email_service)):
     """
@@ -358,7 +358,7 @@ async def update_profile_picture(
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
-# Fix duplicate professional info routes - keep only this one
+# Keep only this consolidated professional info route
 @router.patch("/users/{user_id}/professional", response_model=UserResponse, tags=["User Profile Management"])
 async def update_professional_info(
     user_id: UUID,
