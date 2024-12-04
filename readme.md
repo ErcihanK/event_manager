@@ -11,7 +11,8 @@
    Security was a key concern here. I improved the authentication system by implementing proper token validation and password security measures.
 
 ## Docker Image
-[Event Manager API on DockerHub](https://hub.docker.com/r/ercihanK/event_manager)
+![image](https://github.com/user-attachments/assets/3054eed7-c3d0-41ab-8387-9adbd3d75a5b)
+
 
 ## Project Reflection
 
