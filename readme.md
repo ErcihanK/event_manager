@@ -1,3 +1,10 @@
+# ISSUES
+https://github.com/ErcihanK/event_manager/issues/1
+https://github.com/ErcihanK/event_manager/issues/2
+https://github.com/ErcihanK/event_manager/issues/3
+
+
+
 # Event Manager Company: Software QA Analyst/Developer Onboarding Assignment
 
 Welcome to the Event Manager Company! As a newly hired Software QA Analyst/Developer and a student in software engineering, you are embarking on an exciting journey to contribute to our project aimed at developing a secure, robust REST API that supports JWT token-based OAuth2 authentication. This API serves as the backbone of our user management system and will eventually expand to include features for event management and registration.
