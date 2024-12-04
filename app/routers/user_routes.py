@@ -314,17 +314,34 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Async
         )
 
 
+# Remove duplicate verify_email route and keep only this one
 @router.get("/verify-email/{user_id}/{token}", status_code=status.HTTP_200_OK, name="verify_email", tags=["Login and Registration"])
 async def verify_email(user_id: UUID, token: str, db: AsyncSession = Depends(get_db), email_service: EmailService = Depends(get_email_service)):
     """
     Verify user's email with a provided token.
     
-    - **user_id**: UUID of the user to verify.
-    - **token**: Verification token sent to the user's email.
+    Parameters:
+    - user_id: UUID of the user to verify
+    - token: Verification token sent to the user's email
+    
+    Returns:
+    - dict: Success message if verification is successful
+    
+    Raises:
+    - HTTPException(400): Invalid or expired verification token
     """
-    if await UserService.verify_email_with_token(db, user_id, token):
-        return {"message": "Email verified successfully"}
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token")
+    try:
+        if await UserService.verify_email_with_token(db, user_id, token):
+            return {"message": "Email verified successfully"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Invalid or expired verification token"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 # Fix route paths
 @router.patch("/users/{user_id}/profile-picture", response_model=UserResponse)
@@ -341,33 +358,28 @@ async def update_profile_picture(
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
-@router.patch("/{user_id}/professional", response_model=UserResponse)
-async def update_user_professional_info(
-    user_id: UUID,
-    professional_info: dict,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(status_code=403, detail="Not authorized to update this user")
-        
-    updated_user = await UserService.update_user(
-        db,
-        user_id,
-        {
-            "linkedin_profile_url": professional_info.get("linkedin_url"),
-            "github_profile_url": professional_info.get("github_url")
-        }
-    )
-    return updated_user
-
-@router.patch("/users/{user_id}/professional", response_model=UserResponse)
+# Fix duplicate professional info routes - keep only this one
+@router.patch("/users/{user_id}/professional", response_model=UserResponse, tags=["User Profile Management"])
 async def update_professional_info(
     user_id: UUID,
     professional_data: UserUpdateProfessionalInfo,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    """
+    Update user's professional information.
+    
+    Parameters:
+    - user_id: UUID of the user
+    - professional_data: Professional profile information
+    
+    Returns:
+    - UserResponse: Updated user information
+    
+    Raises:
+    - HTTPException(403): Not authorized to update this profile
+    - HTTPException(404): User not found
+    """
     if str(current_user["user_id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Not authorized to update this profile")
     updated_user = await UserService.update_professional_info(db, user_id, professional_data)
@@ -375,16 +387,9 @@ async def update_professional_info(
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
-@router.post("/users/verify-email/{token}", response_model=dict)
-async def verify_email(
-    token: str,
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        if await UserService.verify_email(db, token):
-            return {"message": "Email verified successfully"}
-        raise HTTPException(status_code=400, detail="Invalid verification token")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# Remove these duplicate routes:
+# - @router.post("/users/verify-email/{token}")
+# - @router.patch("/{user_id}/professional")
+# - @router.patch("/users/{user_id}/professional") (second occurrence)
 
 # ...existing code...
