@@ -45,13 +45,26 @@ class TemplateManager:
 
     def _create_default_templates(self):
         templates = {
-            'email_verification.md': '# Welcome {{name}}\nPlease verify your email at: {{verification_url}}',
-            'header.md': '# Header',
-            'footer.md': '---\nFooter'
+            'email_verification.html': '''
+                <!DOCTYPE html>
+                <html>
+                <body>
+                    <h1>Welcome {{name}}!</h1>
+                    <p>Please verify your email at: {{verification_url}}</p>
+                </body>
+                </html>
+            ''',
+            'verification_email.md': '''
+                # Welcome {{name}}
+
+                Please verify your email by clicking the link below:
+
+                [Verify Email]({{verification_url}})
+            '''
         }
         for name, content in templates.items():
-            path = self.templates_dir / name
-            if not path.exists():
+            path = os.path.join(self.template_dir, name)
+            if not os.path.exists(path):
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(content)
 

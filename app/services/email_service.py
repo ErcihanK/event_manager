@@ -8,6 +8,12 @@ from app.models.user_model import User
 class EmailService:
     def __init__(self, template_manager: TemplateManager):
         self.template_manager = template_manager
+        self.smtp_client = SMTPClient(
+            host="smtp.example.com",
+            port=587,
+            username="user",
+            password="pass"
+        )
 
     async def send_user_email(self, user_data: dict, email_type: str):
         subject_map = {

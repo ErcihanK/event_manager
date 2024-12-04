@@ -44,7 +44,17 @@ class SMTPConnection:
         self.smtp_pass = password
         self.use_tls = use_tls
         
-    def send_email(self, subject: str, content: str, to_email: str):
-        if self.is_test:
-            return True  # Skip actual email sending in tests
-        # ...existing code...
+    def send_email(self, subject: str, content: str, recipient: str):
+        """Send an email with error handling."""
+        try:
+            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.username, self.password)
+                msg = MIMEText(content, 'html')
+                msg['Subject'] = subject
+                msg['From'] = self.username
+                msg['To'] = recipient
+                server.send_message(msg)
+        except Exception as e:
+            logging.error(f"Failed to send email: {str(e)}")
+            raise  # Re-raise the exception for proper error handling

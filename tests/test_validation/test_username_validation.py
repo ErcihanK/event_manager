@@ -94,7 +94,7 @@ async def test_username_valid_patterns(async_client, db_session):
                 "last_name": "User"
             }
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, f"Failed for username: {valid_username}"
 
 @pytest.mark.asyncio
 async def test_password_validation(async_client, db_session):

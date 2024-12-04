@@ -127,52 +127,25 @@ async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db), token: 
 
 
 
-@router.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["User Management"])
+@router.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
-    user: UserCreate, 
-    request: Request, 
-    db: AsyncSession = Depends(get_db), 
-    email_service: EmailService = Depends(get_email_service)
+    user_data: UserCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = None  # Make current_user optional
 ):
-    """
-    Create a new user without requiring authentication.
-    This endpoint is public to allow new user registration.
-    """
     try:
-        existing_user = await UserService.get_by_email(db, user.email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Email already exists"
-            )
-        
-        created_user = await UserService.create(db, user.model_dump(), email_service)
-        if not created_user:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                detail="Failed to create user"
-            )
-        
-        return UserResponse.model_construct(
-            id=created_user.id,
-            bio=created_user.bio,
-            first_name=created_user.first_name,
-            last_name=created_user.last_name,
-            profile_picture_url=created_user.profile_picture_url,
-            github_profile_url=created_user.github_profile_url,
-            linkedin_profile_url=created_user.linkedin_profile_url,
-            nickname=created_user.nickname,
-            email=created_user.email,
-            last_login_at=created_user.last_login_at,
-            created_at=created_user.created_at,
-            updated_at=created_user.updated_at,
-            links=create_user_links(created_user.id, request)
-        )
+        # Validate username/password before checking auth
+        if len(user_data.nickname) < 3 or len(user_data.nickname) > 50:
+            raise HTTPException(status_code=422, detail="Username must be between 3 and 50 characters")
+            
+        # Create user
+        created_user = await UserService.create(db, user_data.model_dump())
+        return UserResponse.model_validate(created_user)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/users/", response_model=UserListResponse, tags=["User Management Requires (Admin or Manager Roles)"])
@@ -358,34 +331,35 @@ async def update_profile_picture(
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
+@router.patch("/users/profile", response_model=UserResponse)
+async def update_profile(
+    profile_data: UserUpdateProfilePicture,
+    current_user: User = Depends(get_current_user)
+):
+    # Validation first
+    if not profile_data.profile_picture_url:
+        raise HTTPException(status_code=422, detail="Profile picture URL cannot be empty")
+    # ...existing code...
+
 # Keep only this consolidated professional info route
-@router.patch("/users/{user_id}/professional", response_model=UserResponse, tags=["User Profile Management"])
+@router.patch("/users/{user_id}/professional", response_model=UserResponse)
 async def update_professional_info(
     user_id: UUID,
     professional_data: UserUpdateProfessionalInfo,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Update user's professional information.
-    
-    Parameters:
-    - user_id: UUID of the user
-    - professional_data: Professional profile information
-    
-    Returns:
-    - UserResponse: Updated user information
-    
-    Raises:
-    - HTTPException(403): Not authorized to update this profile
-    - HTTPException(404): User not found
-    """
-    if str(current_user["user_id"]) != str(user_id):
+    """Update user's professional information."""
+    if str(current_user.get("user_id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Not authorized to update this profile")
-    updated_user = await UserService.update_professional_info(db, user_id, professional_data)
-    if not updated_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return updated_user
+        
+    try:
+        updated_user = await UserService.update_professional_info(db, user_id, professional_data.model_dump())
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return UserResponse.model_validate(updated_user)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 # Remove these duplicate routes:
 # - @router.post("/users/verify-email/{token}")
