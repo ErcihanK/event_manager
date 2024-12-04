@@ -11,7 +11,8 @@
    Security was a key concern here. I improved the authentication system by implementing proper token validation and password security measures.
 
 ## Docker Image
-![image](https://github.com/user-attachments/assets/3054eed7-c3d0-41ab-8387-9adbd3d75a5b)
+![image](https://github.com/user-attachments/assets/59580d38-ae55-4ff5-b1b7-213daa85dd62)
+
 
 
 ## Project Reflection
